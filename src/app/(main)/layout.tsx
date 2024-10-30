@@ -7,7 +7,7 @@ import { AudioProvider } from '@/components/AudioProvider'
 import { AudioPlayer } from '@/components/player/AudioPlayer'
 import { TinyWaveFormIcon } from '@/components/TinyWaveFormIcon'
 import { Waveform } from '@/components/Waveform'
-import posterImage from '@/images/poster.png'
+import posterImage from '@/images/poster.jpg'
 
 function SpotifyIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (

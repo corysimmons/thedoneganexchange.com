@@ -4,12 +4,12 @@ import '@/styles/tailwind.css'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s - Their Side',
-    default:
-      'Their Side - Conversations with the most tragically misunderstood people of our time',
+    template: '%s - The Donegan Exchange',
+    default: `The Donegan Exchange - One man's curious mind, endless questions, and the journey to find
+              answers.`,
   },
-  description:
-    'Conversations with the most tragically misunderstood people of our time.',
+  description: `One man's curious mind, endless questions, and the journey to find
+              answers.`,
 }
 
 export default function RootLayout({

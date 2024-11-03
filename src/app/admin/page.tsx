@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,32 +25,29 @@ import {
 } from 'lucide-react'
 
 export default function PodcastDashboard() {
-  const [podcasts, setPodcasts] = useState([
-    {
-      id: 1,
-      title: 'Introduction to React',
-      author: 'Jane Doe',
-      duration: '45:30',
-      uploadDate: '2023-05-15',
-    },
-    {
-      id: 2,
-      title: 'Advanced TypeScript Techniques',
-      author: 'John Smith',
-      duration: '52:15',
-      uploadDate: '2023-06-02',
-    },
-    {
-      id: 3,
-      title: 'Building Scalable Node.js Applications',
-      author: 'Alice Johnson',
-      duration: '38:45',
-      uploadDate: '2023-06-20',
-    },
-  ])
+  const [podcasts, setPodcasts] = useState([])
+
+  useEffect(() => {
+    // Fetch podcasts from the API
+    const fetchPodcasts = async () => {
+      try {
+        const response = await fetch('/api/podcasts')
+        if (!response.ok) {
+          throw new Error('Failed to fetch podcasts')
+        }
+        const data = await response.json()
+        setPodcasts(data)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    fetchPodcasts()
+  }, [])
 
   const handleDelete = (id: number) => {
     setPodcasts(podcasts.filter((podcast) => podcast.id !== id))
+    // You should also make a DELETE request to your API here
   }
 
   return (
@@ -77,7 +74,7 @@ export default function PodcastDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {podcasts.map((podcast) => (
+                {podcasts.map((podcast: any) => (
                   <TableRow key={podcast.id}>
                     <TableCell>{podcast.title}</TableCell>
                     <TableCell>{podcast.author}</TableCell>

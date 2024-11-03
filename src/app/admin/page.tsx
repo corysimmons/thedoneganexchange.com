@@ -106,22 +106,36 @@ export default function PodcastDashboard() {
             <form className="space-y-6">
               <div>
                 <Label htmlFor="title">Podcast Title</Label>
-                <Input id="title" placeholder="Enter podcast title" />
+                <Input
+                  id="title"
+                  placeholder="Enter podcast title"
+                  className="bg-white"
+                />
               </div>
               <div>
                 <Label htmlFor="author">Author</Label>
-                <Input id="author" placeholder="Enter author name" />
+                <Input
+                  id="author"
+                  placeholder="Enter author name"
+                  className="bg-white"
+                />
               </div>
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
                   placeholder="Enter podcast description"
+                  className="bg-white"
                 />
               </div>
               <div>
                 <Label htmlFor="file">Audio File</Label>
-                <Input id="file" type="file" accept="audio/*" />
+                <Input
+                  id="file"
+                  type="file"
+                  accept="audio/*"
+                  className="bg-white"
+                />
               </div>
               <Button type="submit">
                 <Upload className="mr-2 h-4 w-4" /> Upload Podcast

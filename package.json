@@ -19,6 +19,8 @@
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.12",
+    "axios": "^1.7.7",
+    "better-sqlite3": "^11.5.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
@@ -35,6 +37,8 @@
     "valibot": "^0.25.0"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.4",
+    "@types/better-sqlite3": "^7.6.11",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.4",
     "prettier": "^3.3.2",

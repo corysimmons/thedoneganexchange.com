@@ -15,6 +15,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Mic,
   Upload,
   Pencil,
@@ -39,6 +44,8 @@ export default function PodcastDashboard() {
   const [author, setAuthor] = useState('')
   const [description, setDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [editingPodcast, setEditingPodcast] = useState<Podcast | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const fetchPodcasts = async () => {
     try {
@@ -57,6 +64,14 @@ export default function PodcastDashboard() {
     fetchPodcasts()
   }, [])
 
+  const handleEdit = (podcast: Podcast) => {
+    setEditingPodcast(podcast)
+    setTitle(podcast.title)
+    setAuthor(podcast.author)
+    setDescription(podcast.description || '')
+    setIsEditModalOpen(true)
+  }
+
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this podcast?')) {
       return
@@ -71,6 +86,41 @@ export default function PodcastDashboard() {
       setPodcasts((prevPodcasts) =>
         prevPodcasts.filter((podcast) => podcast.id !== id),
       )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (!editingPodcast) return
+
+    const podcastData = {
+      title,
+      author,
+      description,
+      // Handle file upload here if needed
+    }
+
+    try {
+      const response = await fetch(`/api/podcasts`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...podcastData, id: editingPodcast.id }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update podcast')
+      }
+
+      setEditingPodcast(null)
+      setTitle('')
+      setAuthor('')
+      setDescription('')
+      setFile(null)
+      setIsEditModalOpen(false)
+      fetchPodcasts() // Refresh the podcast list after successful update
     } catch (error) {
       console.error(error)
     }
@@ -99,7 +149,6 @@ export default function PodcastDashboard() {
         throw new Error('Failed to upload podcast')
       }
 
-      const addedPodcast = await response.json()
       setTitle('')
       setAuthor('')
       setDescription('')
@@ -119,7 +168,7 @@ export default function PodcastDashboard() {
         <Tabs defaultValue="list" className="w-full">
           <TabsList>
             <TabsTrigger value="list">Podcast List</TabsTrigger>
-            <TabsTrigger value="upload">Upload Podcast</TabsTrigger>
+            <TabsTrigger value="upload">Upload New Podcast</TabsTrigger>
           </TabsList>
           <TabsContent value="list">
             <Table>
@@ -140,7 +189,12 @@ export default function PodcastDashboard() {
                     <TableCell>{podcast.duration}</TableCell>
                     <TableCell>{podcast.uploadDate}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="mr-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="mr-2"
+                        onClick={() => handleEdit(podcast)}
+                      >
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit</span>
                       </Button>
@@ -201,11 +255,54 @@ export default function PodcastDashboard() {
                 />
               </div>
               <Button type="submit">
-                <Upload className="mr-2 h-4 w-4" /> Upload Podcast
+                <Upload className="mr-2 h-4 w-4" /> Upload New Podcast
               </Button>
             </form>
           </TabsContent>
         </Tabs>
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent>
+            <DialogTitle>Edit Podcast</DialogTitle>
+            <form className="space-y-6" onSubmit={handleUpdate}>
+              <div>
+                <Label htmlFor="edit-title">Podcast Title</Label>
+                <Input
+                  id="edit-title"
+                  placeholder="Edit podcast title"
+                  className="bg-white"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-author">Author</Label>
+                <Input
+                  id="edit-author"
+                  placeholder="Edit author name"
+                  className="bg-white"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  placeholder="Edit podcast description"
+                  className="bg-white"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              <div className="dialog-actions">
+                <Button type="button" onClick={() => setIsEditModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save Changes</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )

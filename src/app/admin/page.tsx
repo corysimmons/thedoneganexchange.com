@@ -319,6 +319,7 @@ const PodcastsPage = () => {
                   <Input
                     type="file"
                     name="audioFile"
+                    accept="audio/*" // Only accept audio file types
                     onChange={handleFileChange}
                     className="w-full"
                     ref={fileInputRef} // Attach the ref to the file input
@@ -389,6 +390,7 @@ const PodcastsPage = () => {
                   <Input
                     type="file"
                     name="audioFile"
+                    accept="audio/*" // Only accept audio file types
                     onChange={handleFileChange}
                     className="w-full"
                     ref={fileInputRef} // Attach the ref to the file input

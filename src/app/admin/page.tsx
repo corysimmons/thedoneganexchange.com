@@ -1,7 +1,10 @@
+// src/app/admin/page.tsx
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs'
+
 import { Textarea } from '~/components/ui/textarea'
 import {
   Dialog,
@@ -25,6 +28,9 @@ const PodcastsPage = () => {
   const [deletePodcastId, setDeletePodcastId] = useState<number | null>(null)
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [editPodcastId, setEditPodcastId] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<string>('upload') // State to track the active tab
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null) // Ref to manage the file input field
 
   useEffect(() => {
     // Fetch all podcasts on component mount
@@ -52,6 +58,50 @@ const PodcastsPage = () => {
 
     fetchPodcasts()
   }, [])
+
+  const resetForm = () => {
+    setForm({ title: '', notes: '', audioUrl: '', videoUrl: '' })
+    setIsEditing(false)
+    setEditPodcastId(null)
+    setActiveTab('upload') // Set active tab to 'upload' when resetting the form
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '' // Reset the file input field
+    }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      try {
+        // Request a signed URL from your server
+        const response = await fetch('/api/podcasts/s3url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+        })
+
+        if (response.ok) {
+          const { signedUrl, fileUrl } = await response.json()
+
+          // Upload the file to S3
+          await fetch(signedUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type,
+            },
+            body: file,
+          })
+
+          // Set the audio URL field in the form
+          setForm((prev) => ({ ...prev, audioUrl: fileUrl }))
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error)
+      }
+    }
+  }
 
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -114,7 +164,7 @@ const PodcastsPage = () => {
             ),
           )
         }
-        setForm({ title: '', notes: '', audioUrl: '', videoUrl: '' })
+        resetForm() // Reset the form after successful upload/edit
       } else {
         console.error('Failed to save podcast')
       }
@@ -134,6 +184,7 @@ const PodcastsPage = () => {
       })
       setIsEditing(true)
       setEditPodcastId(id)
+      setActiveTab('edit') // Switch to the 'edit' tab when editing
     }
   }
 
@@ -157,7 +208,7 @@ const PodcastsPage = () => {
   return (
     <div className="container mx-auto grid grid-cols-1 gap-8 px-4 py-8 md:grid-cols-2">
       {/* Column 1: List of Podcast Names */}
-      <div className="rounded-md bg-white p-4 shadow">
+      <div className="relative rounded-md bg-white p-4 shadow">
         <h2 className="mb-4 text-xl font-bold">Podcasts</h2>
         <ul>
           {podcasts.length > 0 ? (
@@ -166,7 +217,12 @@ const PodcastsPage = () => {
                 key={podcast?.id || Math.random()}
                 className="flex items-center justify-between border-b border-gray-200 py-2"
               >
-                <span>{podcast?.title || 'Untitled Podcast'}</span>
+                <span
+                  onClick={() => handleEdit(podcast.id)}
+                  className="cursor-pointer text-blue-600 hover:underline"
+                >
+                  {podcast?.title || 'Untitled Podcast'}
+                </span>
                 <div className="flex space-x-2">
                   <Pencil1Icon
                     className="h-5 w-5 cursor-pointer text-blue-500"
@@ -214,56 +270,163 @@ const PodcastsPage = () => {
         </ul>
       </div>
 
-      {/* Column 2: Form for Uploading New Podcasts */}
+      {/* Column 2: Form for Uploading or Editing Podcasts */}
       <div className="rounded-md bg-white p-4 shadow">
-        <h2 className="mb-4 text-xl font-bold">
-          {isEditing ? 'Edit Podcast' : 'Upload New Podcast'}
-        </h2>
-        <form onSubmit={handleFormSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Title</label>
-            <Input
-              type="text"
-              name="title"
-              value={form.title}
-              onChange={handleFormChange}
-              className="w-full"
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Notes</label>
-            <Textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleFormChange}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Audio URL</label>
-            <Input
-              type="text"
-              name="audioUrl"
-              value={form.audioUrl}
-              onChange={handleFormChange}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Video URL</label>
-            <Input
-              type="text"
-              name="videoUrl"
-              value={form.videoUrl}
-              onChange={handleFormChange}
-              className="w-full"
-            />
-          </div>
-          <Button type="submit" className="mt-4 w-full">
-            {isEditing ? 'Update Podcast' : 'Upload Podcast'}
-          </Button>
-        </form>
+        <div className="rounded-md bg-white p-4 shadow">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value)}
+          >
+            <TabsList>
+              <TabsTrigger value="upload" onClick={resetForm}>
+                Upload Podcast
+              </TabsTrigger>
+              <TabsTrigger value="edit" disabled={!isEditing}>
+                Edit Podcast
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="upload">
+              {/* Upload Podcast Form */}
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Title
+                  </label>
+                  <Input
+                    type="text"
+                    name="title"
+                    value={form.title}
+                    onChange={handleFormChange}
+                    className="w-full"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Notes
+                  </label>
+                  <Textarea
+                    name="notes"
+                    value={form.notes}
+                    onChange={handleFormChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Upload Audio File
+                  </label>
+                  <Input
+                    type="file"
+                    name="audioFile"
+                    onChange={handleFileChange}
+                    className="w-full"
+                    ref={fileInputRef} // Attach the ref to the file input
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Audio URL
+                  </label>
+                  <Input
+                    type="text"
+                    name="audioUrl"
+                    value={form.audioUrl}
+                    onChange={handleFormChange}
+                    className="w-full"
+                    readOnly
+                    onFocus={(e) => e.target.select()}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Video URL
+                  </label>
+                  <Input
+                    type="text"
+                    name="videoUrl"
+                    value={form.videoUrl}
+                    onChange={handleFormChange}
+                    className="w-full"
+                  />
+                </div>
+                <Button type="submit" className="mt-4 w-full">
+                  {isEditing ? 'Update Podcast' : 'Upload Podcast'}
+                </Button>
+              </form>
+            </TabsContent>
+            <TabsContent value="edit">
+              {/* Edit Podcast Form */}
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Title
+                  </label>
+                  <Input
+                    type="text"
+                    name="title"
+                    value={form.title}
+                    onChange={handleFormChange}
+                    className="w-full"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Notes
+                  </label>
+                  <Textarea
+                    name="notes"
+                    value={form.notes}
+                    onChange={handleFormChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Upload Audio File
+                  </label>
+                  <Input
+                    type="file"
+                    name="audioFile"
+                    onChange={handleFileChange}
+                    className="w-full"
+                    ref={fileInputRef} // Attach the ref to the file input
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Audio URL
+                  </label>
+                  <Input
+                    type="text"
+                    name="audioUrl"
+                    value={form.audioUrl}
+                    onChange={handleFormChange}
+                    className="w-full"
+                    readOnly
+                    onFocus={(e) => e.target.select()}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Video URL
+                  </label>
+                  <Input
+                    type="text"
+                    name="videoUrl"
+                    value={form.videoUrl}
+                    onChange={handleFormChange}
+                    className="w-full"
+                  />
+                </div>
+                <Button type="submit" className="mt-4 w-full">
+                  {isEditing ? 'Update Podcast' : 'Upload Podcast'}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   )

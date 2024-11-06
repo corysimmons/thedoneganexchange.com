@@ -1,9 +1,8 @@
 import Link from 'next/link'
-
-import { Container } from '@/components/Container'
-import { EpisodePlayButton } from '@/components/EpisodePlayButton'
-import { FormattedDate } from '@/components/FormattedDate'
-import { type Episode, getAllEpisodes } from '@/lib/episodes'
+import { Container } from '~/components/Container'
+import { EpisodePlayButton } from '~/components/EpisodePlayButton'
+import { FormattedDate } from '~/components/FormattedDate'
+import { type Podcast as Episode } from '~/types/podcast'
 
 function PauseIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
@@ -26,7 +25,7 @@ function PlayIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 }
 
 function EpisodeEntry({ episode }: { episode: Episode }) {
-  let date = new Date(episode.published)
+  let date = episode.created_at ? new Date(episode.created_at) : new Date()
 
   return (
     <article
@@ -46,7 +45,7 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
             className="order-first font-mono text-sm leading-7 text-slate-500"
           />
           <p className="mt-1 text-base leading-7 text-slate-700">
-            {episode.description}
+            {episode.notes}
           </p>
           <div className="mt-4 flex items-center gap-4">
             <EpisodePlayButton
@@ -86,7 +85,18 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
 }
 
 export default async function Home() {
-  let episodes = await getAllEpisodes()
+  let episodes: Episode[] = []
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/podcasts`)
+    if (!res.ok) {
+      throw new Error('Failed to fetch episodes')
+    }
+    episodes = await res.json()
+  } catch (error) {
+    console.error('Error fetching episodes:', error)
+    // Handle error state if necessary, e.g., display a message or fallback UI
+  }
 
   return (
     <div className="pb-12 pt-16 sm:pb-4 lg:pt-12">
@@ -96,9 +106,15 @@ export default async function Home() {
         </h1>
       </Container>
       <div className="divide-y divide-slate-100 sm:mt-4 lg:mt-8 lg:border-t lg:border-slate-100">
-        {episodes.map((episode) => (
-          <EpisodeEntry key={episode.id} episode={episode} />
-        ))}
+        {episodes.length > 0 ? (
+          episodes.map((episode) => (
+            <EpisodeEntry key={episode.id} episode={episode} />
+          ))
+        ) : (
+          <Container>
+            <p className="mt-4 text-slate-700">No episodes available.</p>
+          </Container>
+        )}
       </div>
     </div>
   )

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 
-import { TinyWaveFormIcon } from '@/components/TinyWaveFormIcon'
+import { TinyWaveFormIcon } from '~/components/TinyWaveFormIcon'
 
 export function AboutSection(props: React.ComponentPropsWithoutRef<'section'>) {
   let [isExpanded, setIsExpanded] = useState(false)

@@ -1,26 +1,25 @@
 'use client'
 
 import { createContext, useContext, useMemo, useReducer, useRef } from 'react'
-
-import { type Episode } from '@/lib/episodes'
+import { type Podcast } from '~/types/podcast'
 
 interface PlayerState {
   playing: boolean
   muted: boolean
   duration: number
   currentTime: number
-  episode: Episode | null
+  episode: Podcast | null
 }
 
 interface PublicPlayerActions {
-  play: (episode?: Episode) => void
+  play: (episode?: Podcast) => void
   pause: () => void
-  toggle: (episode?: Episode) => void
+  toggle: (episode?: Podcast) => void
   seekBy: (amount: number) => void
   seek: (time: number) => void
   playbackRate: (rate: number) => void
   toggleMute: () => void
-  isPlaying: (episode?: Episode) => boolean
+  isPlaying: (episode?: Podcast) => boolean
 }
 
 export type PlayerAPI = PlayerState & PublicPlayerActions
@@ -35,7 +34,7 @@ const enum ActionKind {
 }
 
 type Action =
-  | { type: ActionKind.SET_META; payload: Episode }
+  | { type: ActionKind.SET_META; payload: Podcast }
   | { type: ActionKind.PLAY }
   | { type: ActionKind.PAUSE }
   | { type: ActionKind.TOGGLE_MUTE }
@@ -58,6 +57,8 @@ function audioReducer(state: PlayerState, action: Action): PlayerState {
       return { ...state, currentTime: action.payload }
     case ActionKind.SET_DURATION:
       return { ...state, duration: action.payload }
+    default:
+      return state
   }
 }
 
@@ -79,10 +80,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
           if (
             playerRef.current &&
-            playerRef.current.currentSrc !== episode.audio.src
+            playerRef.current.currentSrc !== (episode.audio_url || '')
           ) {
             let playbackRate = playerRef.current.playbackRate
-            playerRef.current.src = episode.audio.src
+            playerRef.current.src = episode.audio_url || ''
             playerRef.current.load()
             playerRef.current.pause()
             playerRef.current.playbackRate = playbackRate
@@ -118,7 +119,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       },
       isPlaying(episode) {
         return episode
-          ? state.playing && playerRef.current?.currentSrc === episode.audio.src
+          ? state.playing &&
+              playerRef.current?.currentSrc === (episode.audio_url || '')
           : state.playing
       },
     }
@@ -156,7 +158,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function useAudioPlayer(episode?: Episode) {
+export function useAudioPlayer(episode?: Podcast) {
   let player = useContext(AudioPlayerContext)
 
   return useMemo<PlayerAPI>(

@@ -1,81 +1,38 @@
-import { NextRequest, NextResponse } from 'next/server'
-import {
-  getAllPodcasts,
-  addPodcast,
-  updatePodcast,
-  deletePodcast,
-} from '../../../lib/db-utils'
-import { Podcast } from '../../../../types/podcast'
+import { NextResponse } from "next/server";
+import pool from "~/lib/db";
 
-// GET: Fetch all podcasts
 export async function GET() {
+  const client = await pool.connect();
   try {
-    const podcasts = getAllPodcasts()
-    return NextResponse.json(podcasts, { status: 200 })
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Failed to fetch podcasts' },
-      { status: 500 },
-    )
+    const result = await client.query("SELECT * FROM podcasts");
+    return NextResponse.json(result.rows);
+  } finally {
+    client.release();
   }
 }
 
-// POST: Add a new podcast
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
+  const client = await pool.connect();
   try {
-    const body = (await req.json()) as Omit<Podcast, 'id'>
-    addPodcast(body)
-    return NextResponse.json(
-      { message: 'Podcast added successfully!' },
-      { status: 201 },
-    )
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Failed to add podcast' },
-      { status: 500 },
-    )
-  }
-}
+    const { title, notes, audio_url, video_url } = await request.json();
 
-// PUT: Update a podcast
-export async function PUT(req: NextRequest) {
-  try {
-    // Expect the body to contain the full Podcast object, including 'id'
-    const body = (await req.json()) as Podcast
-    if (body.id !== undefined) {
-      const updatedPodcast: Omit<Podcast, 'id'> = {
-        ...body,
-        id: undefined, // Ensure id is not passed
-      } as Omit<Podcast, 'id'>
-      updatePodcast(body.id, updatedPodcast)
-    } else {
-      throw new Error('Podcast ID is missing')
+    if (!title) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
-    return NextResponse.json(
-      { message: 'Podcast updated successfully!' },
-      { status: 200 },
-    )
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Failed to update podcast' },
-      { status: 500 },
-    )
-  }
-}
 
-// DELETE: Delete a podcast
-export async function DELETE(req: NextRequest) {
-  try {
-    const { id } = await req.json()
-    deletePodcast(id)
-    return NextResponse.json(
-      { message: 'Podcast deleted successfully!' },
-      { status: 200 },
-    )
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Failed to delete podcast' },
-      { status: 500 },
-    )
+    const query = `
+      INSERT INTO podcasts (title, notes, audio_url, video_url)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    const values = [title, notes || null, audio_url || null, video_url || null];
+
+    const result = await client.query(query, values);
+    return NextResponse.json({
+      message: "Podcast added successfully",
+      podcast: result.rows[0],
+    });
+  } finally {
+    client.release();
   }
 }

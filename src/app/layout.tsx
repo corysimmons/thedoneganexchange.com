@@ -1,15 +1,13 @@
 import { type Metadata } from 'next'
-
 import '~/styles/tailwind.css'
+import CookieChecker from '~/components/CookieChecker'
 
 export const metadata: Metadata = {
   title: {
     template: '%s - The Donegan Exchange',
-    default: `The Donegan Exchange - One man's curious mind, endless questions, and the journey to find
-              answers.`,
+    default: `The Donegan Exchange - One man's curious mind, endless questions, and the journey to find answers.`,
   },
-  description: `One man's curious mind, endless questions, and the journey to find
-              answers.`,
+  description: `One man's curious mind, endless questions, and the journey to find answers.`,
 }
 
 export default function RootLayout({
@@ -31,6 +29,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full">
+        <CookieChecker />
         <div className="w-full">{children}</div>
       </body>
     </html>

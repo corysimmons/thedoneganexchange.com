@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs'
-
 import { Textarea } from '~/components/ui/textarea'
 import {
   Dialog,
@@ -16,8 +15,10 @@ import {
 } from '~/components/ui/dialog'
 import { Podcast } from '~/types/podcast'
 import { Pencil1Icon, TrashIcon } from '@radix-ui/react-icons'
+import { useUser, SignInButton } from '@clerk/nextjs'
 
 const PodcastsPage = () => {
+  const { isSignedIn, user } = useUser()
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const [form, setForm] = useState({
     title: '',
@@ -33,6 +34,8 @@ const PodcastsPage = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null) // Ref to manage the file input field
 
   useEffect(() => {
+    if (!isSignedIn) return
+
     // Fetch all podcasts on component mount
     const fetchPodcasts = async () => {
       try {
@@ -57,7 +60,7 @@ const PodcastsPage = () => {
     }
 
     fetchPodcasts()
-  }, [])
+  }, [isSignedIn])
 
   const resetForm = () => {
     setForm({ title: '', notes: '', audioUrl: '', videoUrl: '' })
@@ -203,6 +206,16 @@ const PodcastsPage = () => {
     } catch (error) {
       console.error('Error deleting podcast:', error)
     }
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <SignInButton mode="modal">
+          <Button>Sign In to Manage Podcasts</Button>
+        </SignInButton>
+      </div>
+    )
   }
 
   return (

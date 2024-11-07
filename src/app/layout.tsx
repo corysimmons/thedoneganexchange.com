@@ -1,6 +1,11 @@
 import { type Metadata } from 'next'
+import {
+  ClerkProvider,
+  SignedIn,
+  UserButton,
+} from '@clerk/nextjs'
+
 import '~/styles/tailwind.css'
-import CookieChecker from '~/components/CookieChecker'
 
 export const metadata: Metadata = {
   title: {
@@ -16,22 +21,28 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="h-full bg-white antialiased">
-      <head>
-        <link
-          rel="preconnect"
-          href="https://cdn.fontshare.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap"
-        />
-      </head>
-      <body className="flex min-h-full">
-        <CookieChecker />
-        <div className="w-full">{children}</div>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className="h-full bg-white antialiased">
+        <head>
+          <link
+            rel="preconnect"
+            href="https://cdn.fontshare.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            rel="stylesheet"
+            href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap"
+          />
+        </head>
+        <body className="flex min-h-full">
+          <div className="w-full">{children}</div>
+          <SignedIn>
+            <div className='fixed top-4 right-4'>
+              <UserButton />
+            </div>
+          </SignedIn>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

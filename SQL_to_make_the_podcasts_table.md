@@ -19,6 +19,7 @@ END $do$;
 CREATE TABLE IF NOT EXISTS podcasts (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
+  thumbnail_url TEXT, -- Allows NULL
   notes TEXT, -- Allows NULL for Markdown content
   audio_url TEXT, -- Allows NULL
   video_url TEXT, -- Allows NULL

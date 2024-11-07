@@ -1,11 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Container } from '~/components/Container'
 import { EpisodePlayButton } from '~/components/EpisodePlayButton'
 import { FormattedDate } from '~/components/FormattedDate'
 import { PauseIcon } from '~/components/PauseIcon'
 import { PlayIcon } from '~/components/PlayIcon'
+import { VideoIcon } from '@radix-ui/react-icons'
 import { Podcast } from '~/types/podcast'
 
 export default function EpisodeClient({ episode }: { episode: Podcast }) {
@@ -32,37 +34,74 @@ export default function EpisodeClient({ episode }: { episode: Podcast }) {
           &larr; Back
         </button>
 
-        <header className="flex flex-col">
-          <div className="flex items-center gap-6">
-            <EpisodePlayButton
-              episode={episode}
-              className="group relative flex h-18 w-18 flex-shrink-0 items-center justify-center rounded-full bg-slate-700 hover:bg-slate-900 focus:outline-none focus:ring focus:ring-slate-700 focus:ring-offset-4"
-              playing={
-                <PauseIcon className="h-9 w-9 fill-white group-active:fill-white/80" />
-              }
-              paused={
-                <PlayIcon className="h-9 w-9 fill-white group-active:fill-white/80" />
-              }
-            />
-            <div className="flex flex-col">
-              <h1 className="mt-2 text-4xl font-bold text-slate-900">
-                {episode.title}
-              </h1>
-              {date ? (
-                <FormattedDate
-                  date={date}
-                  className="order-first font-mono text-sm leading-7 text-slate-500"
-                />
+        <header className="flex flex-col gap-6 sm:flex-row sm:items-center">
+          {episode.thumbnail_url && (
+            <div className="relative mb-4 w-full sm:mb-0 sm:w-1/4">
+              {episode.video_url ? (
+                <a
+                  href={episode.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Image
+                    src={episode.thumbnail_url}
+                    alt={`${episode.title} thumbnail`}
+                    width={320}
+                    height={180}
+                    className="aspect-video rounded-md object-cover"
+                  />
+                  <VideoIcon
+                    className="absolute inset-0 h-12 w-12 text-red-500"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+                </a>
               ) : (
-                <span className="order-first font-mono text-sm leading-7 text-slate-500">
-                  No Published Date Available
-                </span>
+                <Image
+                  src={episode.thumbnail_url}
+                  alt={`${episode.title} thumbnail`}
+                  width={320}
+                  height={180}
+                  className="aspect-video rounded-md object-cover"
+                />
               )}
             </div>
+          )}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-6">
+              <EpisodePlayButton
+                episode={episode}
+                className="group relative flex h-18 w-18 flex-shrink-0 items-center justify-center rounded-full bg-slate-700 hover:bg-slate-900 focus:outline-none focus:ring focus:ring-slate-700 focus:ring-offset-4"
+                playing={
+                  <PauseIcon className="h-9 w-9 fill-white group-active:fill-white/80" />
+                }
+                paused={
+                  <PlayIcon className="h-9 w-9 fill-white group-active:fill-white/80" />
+                }
+              />
+              <div className="flex flex-col">
+                <h1 className="mt-2 text-4xl font-bold text-slate-900">
+                  {episode.title}
+                </h1>
+                {date ? (
+                  <FormattedDate
+                    date={date}
+                    className="order-first font-mono text-sm leading-7 text-slate-500"
+                  />
+                ) : (
+                  <span className="order-first font-mono text-sm leading-7 text-slate-500">
+                    No Published Date Available
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="ml-24 mt-3 text-lg font-medium leading-8 text-slate-700">
+              {episode.notes ?? 'No description available.'}
+            </p>
           </div>
-          <p className="ml-24 mt-3 text-lg font-medium leading-8 text-slate-700">
-            {episode.notes ?? 'No description available.'}
-          </p>
         </header>
         <hr className="my-12 border-gray-200" />
         <div

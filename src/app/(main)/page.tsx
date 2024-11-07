@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Container } from '~/components/Container'
 import { EpisodePlayButton } from '~/components/EpisodePlayButton'
 import { FormattedDate } from '~/components/FormattedDate'
+import { VideoIcon } from '@radix-ui/react-icons'
 import { type Podcast as Episode } from '~/types/podcast'
 
 function PauseIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
@@ -33,50 +35,87 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
       className="py-10 sm:py-12"
     >
       <Container>
-        <div className="flex flex-col items-start">
-          <h2
-            id={`episode-${episode.id}-title`}
-            className="mt-2 text-lg font-bold text-slate-900"
-          >
-            <Link href={`/${episode.id}`}>{episode.title}</Link>
-          </h2>
-          <FormattedDate
-            date={date}
-            className="order-first font-mono text-sm leading-7 text-slate-500"
-          />
-          <p className="mt-1 text-base leading-7 text-slate-700">
-            {episode.notes}
-          </p>
-          <div className="mt-4 flex items-center gap-4">
-            <EpisodePlayButton
-              episode={episode}
-              className="flex items-center gap-x-3 text-sm font-bold leading-6 text-pink-500 hover:text-pink-700 active:text-pink-900"
-              playing={
-                <>
-                  <PauseIcon className="h-2.5 w-2.5 fill-current" />
-                  <span aria-hidden="true">Listen</span>
-                </>
-              }
-              paused={
-                <>
-                  <PlayIcon className="h-2.5 w-2.5 fill-current" />
-                  <span aria-hidden="true">Listen</span>
-                </>
-              }
+        <div className="flex flex-col items-start sm:flex-row sm:items-center">
+          {episode.thumbnail_url && (
+            <div className="relative mb-4 w-full sm:mb-0 sm:mr-6 sm:w-1/4">
+              {episode.video_url ? (
+                <Link
+                  href={episode.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Image
+                    src={episode.thumbnail_url}
+                    alt={`${episode.title} thumbnail`}
+                    width={320}
+                    height={180}
+                    className="aspect-video rounded-md object-cover"
+                  />
+                  <VideoIcon
+                    className="absolute inset-0 h-12 w-12 text-red-500"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+                </Link>
+              ) : (
+                <Image
+                  src={episode.thumbnail_url}
+                  alt={`${episode.title} thumbnail`}
+                  width={320}
+                  height={180}
+                  className="aspect-video rounded-md object-cover"
+                />
+              )}
+            </div>
+          )}
+          <div className="flex flex-col items-start">
+            <h2
+              id={`episode-${episode.id}-title`}
+              className="mt-2 text-lg font-bold text-slate-900"
+            >
+              <Link href={`/${episode.id}`}>{episode.title}</Link>
+            </h2>
+            <FormattedDate
+              date={date}
+              className="order-first font-mono text-sm leading-7 text-slate-500"
             />
-            <span
-              aria-hidden="true"
-              className="text-sm font-bold text-slate-400"
-            >
-              /
-            </span>
-            <Link
-              href={`/${episode.id}`}
-              className="flex items-center text-sm font-bold leading-6 text-pink-500 hover:text-pink-700 active:text-pink-900"
-              aria-label={`Show notes for episode ${episode.title}`}
-            >
-              Show notes
-            </Link>
+            <p className="mt-1 text-base leading-7 text-slate-700">
+              {episode.notes}
+            </p>
+            <div className="mt-4 flex items-center gap-4">
+              <EpisodePlayButton
+                episode={episode}
+                className="flex items-center gap-x-3 text-sm font-bold leading-6 text-pink-500 hover:text-pink-700 active:text-pink-900"
+                playing={
+                  <>
+                    <PauseIcon className="h-2.5 w-2.5 fill-current" />
+                    <span aria-hidden="true">Listen</span>
+                  </>
+                }
+                paused={
+                  <>
+                    <PlayIcon className="h-2.5 w-2.5 fill-current" />
+                    <span aria-hidden="true">Listen</span>
+                  </>
+                }
+              />
+              <span
+                aria-hidden="true"
+                className="text-sm font-bold text-slate-400"
+              >
+                /
+              </span>
+              <Link
+                href={`/${episode.id}`}
+                className="flex items-center text-sm font-bold leading-6 text-pink-500 hover:text-pink-700 active:text-pink-900"
+                aria-label={`Show notes for episode ${episode.title}`}
+              >
+                Show notes
+              </Link>
+            </div>
           </div>
         </div>
       </Container>

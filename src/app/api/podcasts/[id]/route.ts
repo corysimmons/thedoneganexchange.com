@@ -1,3 +1,4 @@
+// src/app/api/podcasts/[id]/route.ts
 import { NextResponse } from 'next/server'
 import pool from '~/lib/db'
 
@@ -33,12 +34,13 @@ export async function PUT(
   const client = await pool.connect()
   try {
     const podcastId = params.id
-    const { title, notes, audio_url, video_url } = await request.json()
+    const { title, notes, audio_url, video_url, thumbnail_url } =
+      await request.json()
 
     const updateQuery = `
       UPDATE podcasts
-      SET title = $1, notes = $2, audio_url = $3, video_url = $4, updated_at = NOW()
-      WHERE id = $5
+      SET title = $1, notes = $2, audio_url = $3, video_url = $4, thumbnail_url = $5, updated_at = NOW()
+      WHERE id = $6
       RETURNING *
     `
     const result = await client.query(updateQuery, [
@@ -46,6 +48,7 @@ export async function PUT(
       notes,
       audio_url,
       video_url,
+      thumbnail_url,
       podcastId,
     ])
 

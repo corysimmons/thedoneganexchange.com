@@ -25,6 +25,7 @@ const PodcastsPage = () => {
     notes: '',
     audioUrl: '',
     videoUrl: '',
+    thumbnailUrl: '',
   })
   const [deletePodcastId, setDeletePodcastId] = useState<number | null>(null)
   const [isEditing, setIsEditing] = useState<boolean>(false)
@@ -32,6 +33,7 @@ const PodcastsPage = () => {
   const [activeTab, setActiveTab] = useState<string>('upload') // State to track the active tab
 
   const fileInputRef = useRef<HTMLInputElement | null>(null) // Ref to manage the file input field
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null) // Ref to manage the thumbnail input field
 
   useEffect(() => {
     if (!isSignedIn) return
@@ -63,12 +65,21 @@ const PodcastsPage = () => {
   }, [isSignedIn])
 
   const resetForm = () => {
-    setForm({ title: '', notes: '', audioUrl: '', videoUrl: '' })
+    setForm({
+      title: '',
+      notes: '',
+      audioUrl: '',
+      videoUrl: '',
+      thumbnailUrl: '',
+    })
     setIsEditing(false)
     setEditPodcastId(null)
     setActiveTab('upload') // Set active tab to 'upload' when resetting the form
     if (fileInputRef.current) {
       fileInputRef.current.value = '' // Reset the file input field
+    }
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = '' // Reset the thumbnail input field
     }
   }
 
@@ -106,6 +117,42 @@ const PodcastsPage = () => {
     }
   }
 
+  const handleThumbnailChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      try {
+        // Request a signed URL from your server
+        const response = await fetch('/api/podcasts/s3url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+        })
+
+        if (response.ok) {
+          const { signedUrl, fileUrl } = await response.json()
+
+          // Upload the file to S3
+          await fetch(signedUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type,
+            },
+            body: file,
+          })
+
+          // Set the thumbnail URL field in the form
+          setForm((prev) => ({ ...prev, thumbnailUrl: fileUrl }))
+        }
+      } catch (error) {
+        console.error('Error uploading thumbnail:', error)
+      }
+    }
+  }
+
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -121,6 +168,7 @@ const PodcastsPage = () => {
         notes: form.notes,
         audio_url: form.audioUrl,
         video_url: form.videoUrl,
+        thumbnail_url: form.thumbnailUrl,
       }
 
       let response
@@ -184,6 +232,7 @@ const PodcastsPage = () => {
         notes: podcastToEdit?.notes || '',
         audioUrl: podcastToEdit?.audio_url || '',
         videoUrl: podcastToEdit?.video_url || '',
+        thumbnailUrl: podcastToEdit?.thumbnail_url || '',
       })
       setIsEditing(true)
       setEditPodcastId(id)
@@ -211,7 +260,7 @@ const PodcastsPage = () => {
   if (!isSignedIn) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <SignInButton mode="modal">
+        <SignInButton mode="modal" fallbackRedirectUrl="admin">
           <Button>Sign In to Manage Podcasts</Button>
         </SignInButton>
       </div>
@@ -340,6 +389,19 @@ const PodcastsPage = () => {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium">
+                    Upload Thumbnail Image
+                  </label>
+                  <Input
+                    type="file"
+                    name="thumbnailFile"
+                    accept="image/*" // Only accept image file types
+                    onChange={handleThumbnailChange}
+                    className="w-full"
+                    ref={thumbnailInputRef} // Attach the ref to the thumbnail input
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
                     Audio URL
                   </label>
                   <Input
@@ -362,6 +424,20 @@ const PodcastsPage = () => {
                     value={form.videoUrl}
                     onChange={handleFormChange}
                     className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Thumbnail URL
+                  </label>
+                  <Input
+                    type="text"
+                    name="thumbnailUrl"
+                    value={form.thumbnailUrl}
+                    onChange={handleFormChange}
+                    className="w-full"
+                    readOnly
+                    onFocus={(e) => e.target.select()}
                   />
                 </div>
                 <Button type="submit" className="mt-4 w-full">
@@ -411,6 +487,19 @@ const PodcastsPage = () => {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium">
+                    Upload Thumbnail Image
+                  </label>
+                  <Input
+                    type="file"
+                    name="thumbnailFile"
+                    accept="image/*" // Only accept image file types
+                    onChange={handleThumbnailChange}
+                    className="w-full"
+                    ref={thumbnailInputRef} // Attach the ref to the thumbnail input
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
                     Audio URL
                   </label>
                   <Input
@@ -433,6 +522,20 @@ const PodcastsPage = () => {
                     value={form.videoUrl}
                     onChange={handleFormChange}
                     className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Thumbnail URL
+                  </label>
+                  <Input
+                    type="text"
+                    name="thumbnailUrl"
+                    value={form.thumbnailUrl}
+                    onChange={handleFormChange}
+                    className="w-full"
+                    readOnly
+                    onFocus={(e) => e.target.select()}
                   />
                 </div>
                 <Button type="submit" className="mt-4 w-full">

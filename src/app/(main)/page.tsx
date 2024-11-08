@@ -82,9 +82,6 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
               date={date}
               className="order-first font-mono text-sm leading-7 text-slate-500"
             />
-            <p className="mt-1 text-base leading-7 text-slate-700">
-              {episode.notes}
-            </p>
             <div className="mt-4 flex items-center gap-4">
               <EpisodePlayButton
                 episode={episode}

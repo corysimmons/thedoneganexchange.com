@@ -1,3 +1,4 @@
+// src/types/podcast.ts
 export interface Podcast {
   id: number // ID is required since it's from the database
   title: string // Required

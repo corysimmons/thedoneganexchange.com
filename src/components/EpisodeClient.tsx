@@ -1,3 +1,4 @@
+// src/components/EpisodeClient.tsx
 import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '~/components/Container'
@@ -6,8 +7,10 @@ import { FormattedDate } from '~/components/FormattedDate'
 import { VideoIcon } from '@radix-ui/react-icons'
 import { type Podcast as Episode } from '~/types/podcast'
 import { remark } from 'remark'
-import html from 'remark-html'
-import { useEffect, useState } from 'react'
+import remarkRehype from 'remark-rehype'
+import rehypeStringify from 'rehype-stringify'
+import { visit } from 'unist-util-visit'
+import { Plugin } from 'unified'
 
 function PauseIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
@@ -29,20 +32,31 @@ function PlayIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   )
 }
 
-function EpisodeEntry({ episode }: { episode: Episode }) {
-  const [htmlContent, setHtmlContent] = useState<string>('')
-
-  useEffect(() => {
-    const processMarkdown = async () => {
-      if (episode.notes) {
-        const processed = await remark().use(html).process(episode.notes)
-        setHtmlContent(processed.toString())
+// Inline plugin to add target="_blank" and rel="noopener noreferrer" to all links
+const remarkExternalLinks: Plugin = () => {
+  return (tree: any) => {
+    visit(tree, 'link', (node: any) => {
+      if (node && typeof node === 'object' && node.type === 'link') {
+        if (!node.data) node.data = {}
+        if (!node.data.hProperties) node.data.hProperties = {}
+        node.data.hProperties.target = '_blank'
+        node.data.hProperties.rel = 'noopener noreferrer'
       }
-    }
-    processMarkdown()
-  }, [episode.notes])
+    })
+  }
+}
 
+function EpisodeEntry({ episode }: { episode: Episode }) {
   let date = episode.created_at ? new Date(episode.created_at) : new Date()
+
+  // Convert Markdown to HTML with proper attributes for links
+  const markdownContent = episode.notes || ''
+  const htmlContent = remark()
+    .use(remarkExternalLinks)
+    .use(remarkRehype)
+    .use(rehypeStringify)
+    .processSync(markdownContent)
+    .toString()
 
   return (
     <article
@@ -52,7 +66,7 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
       <Container>
         <div className="flex flex-col items-start sm:flex-row sm:items-center">
           {episode.thumbnail_url && (
-            <div className="relative mb-4 aspect-square w-full sm:mb-0 sm:mr-6 sm:w-1/4">
+            <div className="relative mb-4 w-full sm:mb-0 sm:mr-6 sm:w-1/4">
               {episode.video_url ? (
                 <Link
                   href={episode.video_url}
@@ -63,8 +77,8 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
                     src={episode.thumbnail_url}
                     alt={`${episode.title} thumbnail`}
                     width={320}
-                    height={320} // Set to match width for a square thumbnail
-                    className="aspect-square rounded-md border border-gray-300 object-cover" // Change to aspect-square for a 1:1 ratio
+                    height={320} // Updated for square aspect
+                    className="aspect-square rounded-md object-cover"
                   />
                   <VideoIcon
                     className="absolute inset-0 h-12 w-12 text-red-500"
@@ -80,8 +94,8 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
                   src={episode.thumbnail_url}
                   alt={`${episode.title} thumbnail`}
                   width={320}
-                  height={320} // Set to match width for a square thumbnail
-                  className="aspect-square rounded-md border border-gray-300 object-cover" // Change to aspect-square for a 1:1 ratio
+                  height={320} // Updated for square aspect
+                  className="aspect-square rounded-md object-cover"
                 />
               )}
             </div>
@@ -96,10 +110,6 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
             <FormattedDate
               date={date}
               className="order-first font-mono text-sm leading-7 text-slate-500"
-            />
-            <div
-              className="mt-1 text-base leading-7 text-slate-700"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
             <div className="mt-4 flex items-center gap-4">
               <EpisodePlayButton
@@ -118,61 +128,31 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
                   </>
                 }
               />
-              <span
-                aria-hidden="true"
-                className="text-sm font-bold text-slate-400"
-              >
-                /
-              </span>
-              <Link
-                href={`/${episode.id}`}
-                className="flex items-center text-sm font-bold leading-6 text-pink-500 hover:text-pink-700 active:text-pink-900"
-                aria-label={`Show notes for episode ${episode.title}`}
-              >
-                Show notes
-              </Link>
             </div>
           </div>
         </div>
+
+        <div
+          className="prose mt-8 text-base leading-7 text-slate-700"
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+        />
       </Container>
     </article>
   )
 }
 
-export default async function Home() {
-  let episodes: Episode[] = []
-
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/podcasts`)
-    if (!res.ok) {
-      throw new Error('Failed to fetch episodes')
-    }
-    episodes = await res.json()
-  } catch (error) {
-    console.error('Error fetching episodes:', error)
-    // Handle error state if necessary, e.g., display a message or fallback UI
+export default function EpisodeClient({ episode }: { episode: Episode }) {
+  if (!episode) {
+    return (
+      <Container>
+        <p className="mt-4 text-slate-700">No episode available.</p>
+      </Container>
+    )
   }
 
   return (
     <div className="pb-12 pt-16 sm:pb-4 lg:pt-12">
-      <Container>
-        <h1 className="text-2xl font-bold leading-7 text-slate-900">
-          Episodes
-        </h1>
-      </Container>
-      <div className="divide-y divide-slate-100 sm:mt-4 lg:mt-8 lg:border-t lg:border-slate-100">
-        {episodes.length > 0 ? (
-          episodes.map((episode) => (
-            <EpisodeEntry key={episode.id} episode={episode} />
-          ))
-        ) : (
-          <Container>
-            <p className="mt-4 text-slate-700">No episodes available.</p>
-          </Container>
-        )}
-      </div>
+      <EpisodeEntry episode={episode} />
     </div>
   )
 }
-
-export const revalidate = 10

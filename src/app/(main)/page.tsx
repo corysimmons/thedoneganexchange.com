@@ -37,7 +37,7 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
       <Container>
         <div className="flex flex-col items-start sm:flex-row sm:items-center">
           {episode.thumbnail_url && (
-            <div className="relative mb-4 w-full sm:mb-0 sm:mr-6 sm:w-1/4">
+            <div className="relative mb-4 aspect-square w-full rounded-md border border-gray-100 sm:mb-0 sm:mr-6 sm:w-1/4 overflow-hidden">
               {episode.video_url ? (
                 <Link
                   href={episode.video_url}
@@ -48,8 +48,8 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
                     src={episode.thumbnail_url}
                     alt={`${episode.title} thumbnail`}
                     width={320}
-                    height={180}
-                    className="aspect-video rounded-md object-cover"
+                    height={320} // Set to match width for a square thumbnail
+                    className="aspect-square object-cover" // Change to aspect-square for a 1:1 ratio
                   />
                   <VideoIcon
                     className="absolute inset-0 h-12 w-12 text-red-500"
@@ -65,8 +65,8 @@ function EpisodeEntry({ episode }: { episode: Episode }) {
                   src={episode.thumbnail_url}
                   alt={`${episode.title} thumbnail`}
                   width={320}
-                  height={180}
-                  className="aspect-video rounded-md object-cover"
+                  height={320} // Set to match width for a square thumbnail
+                  className="aspect-square object-cover" // Change to aspect-square for a 1:1 ratio
                 />
               )}
             </div>
